@@ -1,33 +1,43 @@
 services:
-  # 1. Contenedor de la Base de Datos MySQL (Configuración Root sin clave)
+  # 1. Contenedor de la Base de Datos MySQL
   base-datos-mysql:
     image: mysql:8.0
     ports:
       - "3306:3306"
     environment:
       - MYSQL_DATABASE=biliotecateceduauth_dev
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes # Permite que el usuario root no tenga contraseña
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
     volumes:
       - mysql-data:/var/lib/mysql
     restart: always
 
-  # 2. Las 2 instancias (réplicas) de tu microservicio en el puerto 8084
-  microservicio-elegido:
+  # 2. Instancia 1 de tu microservicio (Puerto 8083)
+  microservicio-elegido-1:
     image: bibliotecatecedu-modulo:local
     build: .
     ports:
-      - "8084:8084"
+      - "8083:8084"  # Mapea el puerto 8083 de tu Windows al 8084 interno
     depends_on:
       - base-datos-mysql
     environment:
-      # Ajustamos las credenciales para que Spring se conecte como root y sin clave
       - SPRING_DATASOURCE_URL=jdbc:mysql://base-datos-mysql:3306/biliotecateceduauth_dev?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD= # Se deja vacío porque no tiene contraseña
-    deploy:
-      replicas: 2 # Parámetro de Escalabilidad
-      restart_policy:
-        condition: on-failure
+      - SPRING_DATASOURCE_PASSWORD=
+    restart: always
+
+  # 3. Instancia 2 de tu microservicio (Puerto 8084)
+  microservicio-elegido-2:
+    image: bibliotecatecedu-modulo:local
+    build: .
+    ports:
+      - "8084:8084"  # Mapea el puerto 8084 de tu Windows al 8084 interno
+    depends_on:
+      - base-datos-mysql
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://base-datos-mysql:3306/biliotecateceduauth_dev?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+    restart: always
 
 volumes:
   mysql-data:
