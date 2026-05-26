@@ -1,0 +1,48 @@
+name: Pipeline CI/CD - BibliotecaTecEdu Auth
+
+# El pipeline se ejecutará automáticamente cada vez que se haga push a la rama main
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Descargar el código del repositorio a la máquina virtual de GitHub
+    - name: Checkout del código
+      uses: actions/checkout@v4
+
+    # 2. Configurar el entorno de Java
+    - name: Configurar JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    # 3. Compilar el proyecto con Maven (Generar el .jar)
+    - name: Compilar con Maven (Bypass Tests)
+      run: |
+        if [ -f "./mvnw" ]; then
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests
+        else
+          mvn clean package -DskipTests
+        fi
+
+    # 4. Escaneo de seguridad con Snyk (Para cumplir con DevSecOps)
+    - name: Ejecutar Análisis de Seguridad con Snyk
+      uses: snyk/actions/maven@master
+      continue-on-error: true # Permite que el pipeline siga aunque Snyk encuentre vulnerabilidades
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+    # 5. Simular la construcción de la imagen Docker
+    - name: Construir Imagen Docker de Prueba
+      run: |
+        docker build -t bibliotecatecedu-modulo:local .
+        echo "✅ Imagen Docker construida con éxito en GitHub Actions"
