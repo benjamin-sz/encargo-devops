@@ -1,0 +1,33 @@
+services:
+  # 1. Contenedor de la Base de Datos MySQL (Configuración Root sin clave)
+  base-datos-mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=biliotecateceduauth_dev
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes # Permite que el usuario root no tenga contraseña
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: always
+
+  # 2. Las 2 instancias (réplicas) de tu microservicio en el puerto 8084
+  microservicio-elegido:
+    image: bibliotecatecedu-modulo:local
+    build: .
+    ports:
+      - "8084:8084"
+    depends_on:
+      - base-datos-mysql
+    environment:
+      # Ajustamos las credenciales para que Spring se conecte como root y sin clave
+      - SPRING_DATASOURCE_URL=jdbc:mysql://base-datos-mysql:3306/biliotecateceduauth_dev?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD= # Se deja vacío porque no tiene contraseña
+    deploy:
+      replicas: 2 # Parámetro de Escalabilidad
+      restart_policy:
+        condition: on-failure
+
+volumes:
+  mysql-data:
