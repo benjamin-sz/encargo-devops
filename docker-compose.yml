@@ -5,11 +5,15 @@ services:
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_DATABASE=biliotecateceduauth_dev
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=biblioteca_tecedu_auth_dev
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_ROOT_HOST=%
     volumes:
       - mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
     restart: always
+    networks:
+      - red-bibliotecatecedu
 
   # 2. Instancia 1 de tu microservicio (Puerto 8083)
   microservicio-elegido-1:
@@ -20,10 +24,15 @@ services:
     depends_on:
       - base-datos-mysql
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://base-datos-mysql:3306/biliotecateceduauth_dev?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://base-datos-mysql:3306/biblioteca_tecedu_auth_dev?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_DATASOURCE_PASSWORD=root
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,prometheus,metrics
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - MANAGEMENT_HEALTH_PROBES_ENABLED=true
     restart: always
+    networks:
+      - red-bibliotecatecedu
 
   # 3. Instancia 2 de tu microservicio (Puerto 8084)
   microservicio-elegido-2:
@@ -34,10 +43,20 @@ services:
     depends_on:
       - base-datos-mysql
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://base-datos-mysql:3306/biliotecateceduauth_dev?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://base-datos-mysql:3306/biblioteca_tecedu_auth_dev?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_DATASOURCE_PASSWORD=root
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,prometheus,metrics
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - MANAGEMENT_HEALTH_PROBES_ENABLED=true
     restart: always
+    networks:
+      - red-bibliotecatecedu
 
 volumes:
   mysql-data:
+
+networks:
+  red-bibliotecatecedu:
+    name: red-bibliotecatecedu
+    driver: bridge

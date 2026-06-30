@@ -17,4 +17,10 @@ COPY --from=build /app/target/*.jar app.jar
 # Informamos que el microservicio usa el puerto 8084
 EXPOSE 8084
 
+# Healthcheck: Docker marca el contenedor 'unhealthy' si Actuator no responde
+# (wget viene incluido en alpine vía busybox, no se necesita instalar curl)
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -q --spider http://localhost:8084/actuator/health || exit 1
+
 ENTRYPOINT ["java", "-jar", "app.jar"]
+

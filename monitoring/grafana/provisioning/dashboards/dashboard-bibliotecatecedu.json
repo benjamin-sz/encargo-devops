@@ -1,0 +1,71 @@
+{
+  "title": "BibliotecaTecedu - Observabilidad CI/CD",
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Disponibilidad (instancias UP)",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "expr": "sum(up{job=\"bibliotecatecedu-modulo\"})" }]
+    },
+    {
+      "type": "graph",
+      "title": "Tasa de errores HTTP 5xx",
+      "gridPos": { "h": 6, "w": 9, "x": 6, "y": 0 },
+      "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[2m]))" }]
+    },
+    {
+      "type": "graph",
+      "title": "Latencia P95 (s)",
+      "gridPos": { "h": 6, "w": 9, "x": 15, "y": 0 },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))" }]
+    },
+    {
+      "type": "graph",
+      "title": "Uso de CPU por contenedor (%)",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 6 },
+      "targets": [{ "expr": "rate(container_cpu_usage_seconds_total{name=~\"bibliotecatecedu.*\"}[1m]) * 100" }]
+    },
+    {
+      "type": "graph",
+      "title": "Uso de memoria heap JVM (%)",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 6 },
+      "targets": [{ "expr": "(jvm_memory_used_bytes{area=\"heap\"} / jvm_memory_max_bytes{area=\"heap\"}) * 100" }]
+    },
+    {
+      "type": "stat",
+      "title": "Solicitudes por segundo",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 6 },
+      "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count[1m]))" }]
+    },
+    {
+      "type": "stat",
+      "title": "Cobertura de pruebas (última build, %)",
+      "description": "Alimentado por pipeline_metrics.prom generado en el paso de tests del pipeline.sh",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 12 },
+      "targets": [{ "expr": "pipeline_test_coverage_percent" }]
+    },
+    {
+      "type": "stat",
+      "title": "Duración del último despliegue (s)",
+      "description": "Alimentado por pipeline_metrics.prom generado al final del pipeline.sh",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 12 },
+      "targets": [{ "expr": "pipeline_deploy_duration_seconds" }]
+    },
+    {
+      "type": "stat",
+      "title": "Vulnerabilidades críticas (Snyk, última build)",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 12 },
+      "targets": [{ "expr": "pipeline_snyk_critical_vulns" }]
+    },
+    {
+      "type": "stat",
+      "title": "Issues bloqueantes SonarQube",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 12 },
+      "targets": [{ "expr": "pipeline_sonar_blocker_issues" }]
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}
+

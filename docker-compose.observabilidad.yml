@@ -1,0 +1,91 @@
+version: "3.8"
+
+# Uso: docker compose -f docker-compose.yml -f docker-compose.observabilidad.yml up -d
+# Mantiene intacto su docker-compose.yml original (microservicio + MySQL) y AGREGA el stack de observabilidad.
+
+services:
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alert.rules.yml:/etc/prometheus/alert.rules.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - red-bibliotecatecedu
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - red-bibliotecatecedu
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    networks:
+      - red-bibliotecatecedu
+
+  # Permite que el script pipeline.sh "empuje" métricas que no son HTTP
+  # (cobertura de tests, duración de despliegue, hallazgos de Snyk/Sonar)
+  pushgateway:
+    image: prom/pushgateway:latest
+    container_name: pushgateway
+    ports:
+      - "9091:9091"
+    networks:
+      - red-bibliotecatecedu
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonar-data:/opt/sonarqube/data
+      - sonar-extensions:/opt/sonarqube/extensions
+      - sonar-logs:/opt/sonarqube/logs
+    networks:
+      - red-bibliotecatecedu
+
+  # Métricas de contenedores (CPU/memoria por contenedor) para el dashboard
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - red-bibliotecatecedu
+
+volumes:
+  grafana-data:
+  sonar-data:
+  sonar-extensions:
+  sonar-logs:
+
+networks:
+  red-bibliotecatecedu:
+    external: true
+    name: red-bibliotecatecedu
+

@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+rule_files:
+  - "alert.rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+scrape_configs:
+  # El propio Prometheus
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Métricas "empujadas" por el pipeline (cobertura, duración despliegue, vulns)
+  - job_name: 'pushgateway'
+    honor_labels: true
+    static_configs:
+      - targets: ['pushgateway:9091']
+
+  - job_name: 'bibliotecatecedu-modulo'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'microservicio-elegido-1:8084'
+          - 'microservicio-elegido-2:8084'
+        labels:
+          servicio: 'auth-modulo'
+
