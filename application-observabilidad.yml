@@ -1,0 +1,32 @@
+# application-observabilidad.yml
+# Importar con: spring.profiles.include: observabilidad  (o fusionar con application.yml)
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true        # expone /actuator/health/liveness y /readiness (útil también para K8s)
+  metrics:
+    tags:
+      application: bibliotecatecedu-modulo
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true   # necesario para histogram_quantile (latencia P95) en Grafana
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.bibliotecatecedu: DEBUG
+  pattern:
+    # Logs en formato JSON estructurado -> facilita correlación con métricas y trazas
+    console: '{"timestamp":"%d{yyyy-MM-dd HH:mm:ss.SSS}","level":"%p","logger":"%c","thread":"%t","msg":"%m"}%n'
+
